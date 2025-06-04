@@ -1,8 +1,8 @@
 const API_URL = 'https://fakestoreapi.com';
 
-const getProductos = async () => {
+const getProductos = async recurso => {
     try {
-        const res = await fetch(`${API_URL}/products`);
+        const res = await fetch(`${API_URL}/${recurso}`);
         if (!res.ok) throw new Error('Error al obtener productos');
         const data = await res.json();
 
@@ -16,10 +16,10 @@ const getProductos = async () => {
     }
 };
 
-const getProductoPorId = async id => {
+const getProductoPorId = async (recurso, id) => {
     try {
         if (!id) throw new Error('Debes pasar por parametro un ID');
-        const res = await fetch(`${API_URL}/products/${id}`);
+        const res = await fetch(`${API_URL}/${recurso}/${id}`);
         if (!res.ok) throw new Error(`El producto ${id} no fue encontrado.`);
         const data = await res.json();
 
@@ -35,19 +35,19 @@ const getProductoPorId = async id => {
     }
 };
 
-const crearProducto = async (title, price, category) => {
+const crearProducto = async (recurso, titulo, precio, categoria) => {
     try {
-        if (!title || !price || !category) throw new Error('Faltan datos');
-        const parsedPrice = parseFloat(price);
-        if (isNaN(parsedPrice)) throw new Error('El precio debe ser un número');
+        if (!titulo || !precio || !categoria) throw new Error('Faltan datos');
+        const parsedPrecrio = parseFloat(precio);
+        if (isNaN(parsedPrecrio)) throw new Error('El precio debe ser un número');
 
         const nuevoProducto = {
-            title: title,
-            price: parsedPrice,
-            category: category,
-            description: `Producto ${title} en categoria ${category}`,
+            title: titulo,
+            price: parsedPrecrio,
+            category: categoria,
+            description: `Producto ${titulo} en categoria ${categoria}`,
         };
-        const res = await fetch(`${API_URL}/products`, {
+        const res = await fetch(`${API_URL}/${recurso}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -69,11 +69,11 @@ const crearProducto = async (title, price, category) => {
     }
 };
 
-const eliminarProducto = async id => {
+const eliminarProducto = async (recurso, id) => {
     try {
         if (!id) throw new Error('Debes pasar por parametro un ID');
 
-        const res = await fetch(`${API_URL}/products/${id}`, {
+        const res = await fetch(`${API_URL}/${recurso}/${id}`, {
             method: 'DELETE',
         });
 
@@ -87,31 +87,34 @@ const eliminarProducto = async id => {
     }
 };
 
-const [, , method, , ...args] = process.argv;
+const [, , metodo, recurso, ...args] = process.argv;
 
 const run = async () => {
     try {
-        switch (method) {
+        switch (metodo) {
             case 'GET':
-                args.length === 0 ? getProductos() : getProductoPorId(args[0]);
+                args.length === 0
+                    ? await getProductos(recurso)
+                    : await getProductoPorId(recurso, args[0]);
                 break;
             case 'POST':
                 const [title, price, category] = args;
-                crearProducto(title, price, category);
+                await crearProducto(recurso, title, price, category);
                 break;
             case 'DELETE':
-                eliminarProducto(args[0]);
+                await eliminarProducto(recurso, args[0]);
                 break;
             default:
                 console.log(`
                     Método inválido. Usa:
-                    \n - npm run start GET
-                    \n - npm run start GET <id>
-                    \n - npm run start POST <title> <price> <category>
-                    \n - npm run start DELETE <id>
+                    \n - npm run start GET products
+                    \n - npm run start GET products <id>
+                    \n - npm run start POST products <Titulo> <Precio> <Categoria>
+                    \n - npm run start DELETE products <id>
                     `);
         }
     } catch (err) {
         console.error('Error: ', err.message);
     }
 };
+run();
